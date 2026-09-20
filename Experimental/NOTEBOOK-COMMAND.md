@@ -18,19 +18,19 @@ sudo apt install -y software-properties-common
 sudo add-apt-repository ppa:deadsnakes/ppa
 sudo apt update
 
-# 3. Install Python 3.14 and venv support
-sudo apt install -y python3.14 python3.14-venv python3.14-dev
+# 3. Install Python 3.12 and venv support
+sudo apt install -y python3.12 python3.12-venv python3.12-dev
 
 # 4. Verify
-python3.14 --version
+python3.12 --version
 
 # 5. Create the .grpo virtual environment
-python3.14 -m venv .grpo
+python3.12 -m venv .grpo
 
 # 6. Activate it
 source .grpo/bin/activate
 
-# 7. Verify the venv is using Python 3.14
+# 7. Verify the venv is using Python 3.12
 python --version
 which python
 ```
