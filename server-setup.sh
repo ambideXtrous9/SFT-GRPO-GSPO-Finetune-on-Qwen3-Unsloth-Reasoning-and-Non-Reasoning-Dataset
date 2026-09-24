@@ -1,165 +1,84 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 set -e
 
-echo "=========================================="
-echo " GRPO Environment Setup"
-echo "=========================================="
+echo "=== GRPO Environment Setup ==="
 
-# --------------------------------------------------
-# 0. Check sudo
-# --------------------------------------------------
-
-if ! command -v sudo &> /dev/null; then
-    echo "ERROR: sudo is required."
-    exit 1
-fi
-
-# --------------------------------------------------
-# 1. Update system packages
-# --------------------------------------------------
-
+# 1. NVIDIA Driver
 echo ""
-echo "[1/7] Updating apt packages..."
+echo "[1/5] Setting up NVIDIA driver..."
 
 sudo apt update
 
-# --------------------------------------------------
-# 2. Install NVIDIA Driver
-# --------------------------------------------------
-
-echo ""
-echo "[2/7] Installing NVIDIA driver..."
-
-if command -v nvidia-smi &> /dev/null; then
-    echo "NVIDIA driver already installed."
-else
+if ! command -v nvidia-smi &>/dev/null; then
     sudo apt install -y nvidia-driver-595
 fi
 
-echo ""
-echo "Checking NVIDIA GPU..."
+# Try to load NVIDIA modules without reboot
+sudo modprobe nvidia 2>/dev/null || true
+sudo modprobe nvidia_uvm 2>/dev/null || true
+sudo modprobe nvidia_modeset 2>/dev/null || true
+sudo modprobe nvidia_drm 2>/dev/null || true
 
-if nvidia-smi; then
+sleep 2
+
+if nvidia-smi &>/dev/null; then
     echo "NVIDIA driver is working."
+    nvidia-smi
 else
-    echo "WARNING: nvidia-smi failed."
-    echo "You may need to reboot the machine and run:"
-    echo "    nvidia-smi"
+    echo "WARNING: nvidia-smi is not working."
+    echo "Driver may require a reboot."
 fi
 
-# --------------------------------------------------
-# 3. Install prerequisites
-# --------------------------------------------------
 
+# 2. Python prerequisites
 echo ""
-echo "[3/7] Installing Python prerequisites..."
+echo "[2/5] Installing Python prerequisites..."
 
 sudo apt install -y software-properties-common
 
-# --------------------------------------------------
-# 4. Add deadsnakes PPA
-# --------------------------------------------------
-
+# 3. Python 3.12
 echo ""
-echo "[4/7] Adding deadsnakes PPA..."
+echo "[3/5] Installing Python 3.12..."
 
-if grep -R "deadsnakes/ppa" /etc/apt/sources.list.d/ &> /dev/null; then
-    echo "deadsnakes PPA already exists."
-else
+if ! command -v python3.12 &>/dev/null; then
     sudo add-apt-repository -y ppa:deadsnakes/ppa
+    sudo apt update
+    sudo apt install -y python3.12 python3.12-venv python3.12-dev
 fi
 
-sudo apt update
-
-# --------------------------------------------------
-# 5. Install Python 3.12
-# --------------------------------------------------
-
-echo ""
-echo "[5/7] Installing Python 3.12..."
-
-sudo apt install -y \
-    python3.12 \
-    python3.12-venv \
-    python3.12-dev
-
-echo ""
-echo "Python version:"
 python3.12 --version
 
-# --------------------------------------------------
-# 6. Create virtual environment
-# --------------------------------------------------
 
+# 4. Create virtual environment
 echo ""
-echo "[6/7] Creating .grpo virtual environment..."
+echo "[4/5] Creating .grpo environment..."
 
-if [ -d ".grpo" ]; then
-    echo ".grpo already exists."
-else
+if [ ! -d ".grpo" ]; then
     python3.12 -m venv .grpo
 fi
 
-# Activate environment for THIS script
 source .grpo/bin/activate
 
-echo ""
-echo "Virtual environment:"
 echo "Python: $(python --version)"
 echo "Path:   $(which python)"
 
-# --------------------------------------------------
-# 7. Install Python packages
-# --------------------------------------------------
+
+# 5. Install Python tools
+echo ""
+echo "[5/5] Installing Python packages..."
+
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install jupyter nbconvert
 
 echo ""
-echo "[7/7] Installing Python packages..."
-
-python -m pip install --upgrade \
-    pip \
-    setuptools \
-    wheel
-
-python -m pip install \
-    jupyter \
-    nbconvert
+echo "=== Setup Complete ==="
 
 echo ""
-echo "Jupyter version:"
-jupyter nbconvert --version
-
-# --------------------------------------------------
-# Done
-# --------------------------------------------------
+echo "To activate later:"
+echo "source .grpo/bin/activate"
 
 echo ""
-echo "=========================================="
-echo " GRPO SETUP COMPLETE"
-echo "=========================================="
-
-echo ""
-echo "Python:"
-python --version
-
-echo ""
-echo "Python location:"
-which python
-
-echo ""
-echo "NVIDIA:"
-nvidia-smi --query-gpu=name,driver_version,memory.total \
-    --format=csv,noheader || true
-
-echo ""
-echo "To activate the environment in your shell:"
-echo ""
-echo "    source .grpo/bin/activate"
-echo ""
-
-echo "Then verify:"
-echo ""
-echo "    python --version"
-echo "    which python"
-echo "    nvidia-smi"
-echo ""
+echo "Verify:"
+echo "python --version"
+echo "nvidia-smi"
