@@ -18,6 +18,13 @@ This project demonstrates how to fine-tune the lightweight **Qwen3-0.6B** langua
 
 ---
 
+## Server Setup
+
+```bash
+chmod +x setup_grpo.sh
+./setup_grpo.sh
+```
+
 ## 📦 Installation
 
 Install required libraries:
